@@ -1,20 +1,20 @@
-package viewmodels
+package com.brownicians.eventapp.viewmodels
 
 import android.util.Log
 import androidx.lifecycle.*
-import datastores.EventDataStore
+import com.brownicians.eventapp.repositories.EventRepository
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Function3
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.rxkotlin.withLatestFrom
 import io.reactivex.subjects.PublishSubject
-import models.EventModel
+import com.brownicians.eventapp.models.EventModel
 
 interface CreateEventViewModel {
-    class Factory(private val eventDataStore: EventDataStore): ViewModelProvider.Factory {
+    class Factory(private val eventRepository: EventRepository): ViewModelProvider.Factory {
         override fun <T : androidx.lifecycle.ViewModel?> create(modelClass: Class<T>): T {
-            return ViewModel(eventDataStore) as T
+            return ViewModel(eventRepository) as T
         }
     }
 
@@ -36,7 +36,9 @@ interface CreateEventViewModel {
         val eventId: LiveData<Int>
     }
 
-    class ViewModel(private val eventDataStore: EventDataStore): androidx.lifecycle.ViewModel(), Outputs, Inputs {
+    class ViewModel(private val eventRepository: EventRepository): androidx.lifecycle.ViewModel(),
+        Outputs,
+        Inputs {
         val inputs: Inputs = this
         val outputs: Outputs = this
 
@@ -120,14 +122,19 @@ interface CreateEventViewModel {
             userInputDisposable = backingCreateButtonTaps
                 .withLatestFrom<Unit, String, String, String, String, UserInput>(backingEventName, backingLocation, backingEventDate, backingPassword, object: Function5<Unit, String, String, String, String, UserInput> {
                     override fun invoke(t1: Unit, t2: String, t3: String, t4: String, t5: String): UserInput {
-                        return UserInput(t2, t3, t4, t5)
+                        return UserInput(
+                            t2,
+                            t3,
+                            t4,
+                            t5
+                        )
                     }
                 }).subscribeBy (
                     onNext = { this.userInput.onNext(it) }
                 )
             this.saveEventDisposable = this.userInput
                 .switchMap {
-                    this.eventDataStore.save(it.name, it.date, it.location, it.password)
+                    this.eventRepository.save(it.name, it.date, it.location, it.password)
                 }.subscribeBy(
                     onNext = { this.saveEventResult.onNext(it) }
                 )

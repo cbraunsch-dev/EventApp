@@ -1,15 +1,15 @@
-package datastores
+package com.brownicians.eventapp.repositories
 
 import io.reactivex.Observable
-import models.EventModel
+import com.brownicians.eventapp.models.EventModel
 
-interface EventDataStore {
+interface EventRepository {
     fun save(name: String, date: String, location: String, password: String?): Observable<EventModel>
 
     fun load(eventId: Int): Observable<EventModel?>
 }
 
-class InMemoryEventDataStore: EventDataStore {
+class InMemoryEventRepository: EventRepository {
     override fun save(name: String, date: String, location: String, password: String?): Observable<EventModel> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
