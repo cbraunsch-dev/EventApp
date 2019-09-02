@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools">
+    <data>
+        <variable
+                name="viewmodel"
+                type="viewmodels.CreateEventViewModel.ViewModel" />
+    </data>
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:context=".activities.CreateEventActivity"
+            android:padding="@dimen/bux2"
+            android:orientation="vertical">
+
+        <EditText
+                android:text="@={viewmodel.inputs.eventName}"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Name"/>
+        <EditText
+                android:text="@={viewmodel.inputs.eventDate}"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Date"/>
+        <EditText
+                android:text="@={viewmodel.inputs.location}"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Location"/>
+        <EditText
+                android:text="@={viewmodel.inputs.password}"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Password"/>
+        <Button
+                android:enabled="@{viewmodel.outputs.createButtonEnabled}"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Create"/>
+    </LinearLayout>
+</layout>
