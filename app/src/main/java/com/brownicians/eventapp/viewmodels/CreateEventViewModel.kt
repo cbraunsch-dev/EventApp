@@ -2,6 +2,7 @@ package com.brownicians.eventapp.viewmodels
 
 import android.util.Log
 import androidx.lifecycle.*
+import com.brownicians.eventapp.DisposeBag
 import com.brownicians.eventapp.ObservableBinder
 import com.brownicians.eventapp.extensions.disposedBy
 import com.brownicians.eventapp.repositories.EventRepository
@@ -36,21 +37,6 @@ interface CreateEventViewModel {
         val createButtonEnabled: LiveData<Boolean>
 
         val eventId: LiveData<Int>
-    }
-
-    class DisposeBag {
-        private val disposables = ArrayList<Disposable>()
-
-        fun addDisposable(disposable: Disposable) {
-            this.disposables.add(disposable)
-        }
-
-        fun clearBag() {
-            disposables.forEach {
-                it.dispose()
-            }
-            disposables.clear()
-        }
     }
 
     class ViewModel(private val eventRepository: EventRepository): androidx.lifecycle.ViewModel(),
@@ -108,9 +94,7 @@ interface CreateEventViewModel {
                 event.isNotEmpty() && date.isNotEmpty() && location.isNotEmpty()
             })
 
-            userInputValid.subscribeBy(
-                onNext = { this.createButtonEnabled.value = it }
-            ).disposedBy(this.disposeBag)
+            ObservableBinder<Boolean>().bind(userInputValid, this.createButtonEnabled, this.disposeBag)
 
             backingCreateButtonTaps
                 .withLatestFrom<Unit, String, String, String, String, UserInput>(backingEventName, backingLocation, backingEventDate, backingPassword, object: Function5<Unit, String, String, String, String, UserInput> {

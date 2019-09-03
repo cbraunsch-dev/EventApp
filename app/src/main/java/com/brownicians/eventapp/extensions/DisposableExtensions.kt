@@ -1,8 +1,8 @@
 package com.brownicians.eventapp.extensions
 
-import com.brownicians.eventapp.viewmodels.CreateEventViewModel
+import com.brownicians.eventapp.DisposeBag
 import io.reactivex.disposables.Disposable
 
-fun Disposable.disposedBy(bag: CreateEventViewModel.DisposeBag) {
+fun Disposable.disposedBy(bag: DisposeBag) {
     bag.addDisposable(this)
 }
