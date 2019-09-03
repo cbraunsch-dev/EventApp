@@ -3,6 +3,7 @@ package com.brownicians.eventapp.viewmodels
 import android.util.Log
 import androidx.lifecycle.*
 import com.brownicians.eventapp.ObservableBinder
+import com.brownicians.eventapp.extensions.disposedBy
 import com.brownicians.eventapp.repositories.EventRepository
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
@@ -37,11 +38,27 @@ interface CreateEventViewModel {
         val eventId: LiveData<Int>
     }
 
+    class DisposeBag {
+        private val disposables = ArrayList<Disposable>()
+
+        fun addDisposable(disposable: Disposable) {
+            this.disposables.add(disposable)
+        }
+
+        fun clearBag() {
+            disposables.forEach {
+                it.dispose()
+            }
+            disposables.clear()
+        }
+    }
+
     class ViewModel(private val eventRepository: EventRepository): androidx.lifecycle.ViewModel(),
         Outputs,
         Inputs {
         val inputs: Inputs = this
         val outputs: Outputs = this
+        private val disposeBag = DisposeBag()
 
         private val eventNameMediator: MediatorLiveData<String>
         private val backingEventName: PublishSubject<String> = PublishSubject.create()
@@ -63,16 +80,10 @@ interface CreateEventViewModel {
         private val backingCreateButtonTaps: PublishSubject<Unit> = PublishSubject.create()
         override val createButtonTaps = MutableLiveData<Unit>()
 
-        private val createButtonEnabledDisposable: Disposable
         private val backingCreateButtonEnabled: PublishSubject<Boolean> = PublishSubject.create()
         override val createButtonEnabled = MutableLiveData<Boolean>()
 
         override val eventId = MutableLiveData<Int>()
-
-        private val userInputValidDisposable: Disposable
-        private val userInputDisposable: Disposable
-        private val saveEventDisposable: Disposable
-        private val saveEventResultDisposable: Disposable
 
         private val userInput: PublishSubject<UserInput> = PublishSubject.create()
         private val saveEventResult: PublishSubject<EventModel> = PublishSubject.create()
@@ -84,10 +95,11 @@ interface CreateEventViewModel {
             passwordMediator = ObservableBinder<String>().bind(inputs.password, backingPassword)
             createButtonTapsMediator = ObservableBinder<Unit>().bind(inputs.createButtonTaps, backingCreateButtonTaps)
 
-            this.createButtonEnabledDisposable = this.backingCreateButtonEnabled
+            this.backingCreateButtonEnabled
                 .subscribeBy(
                     onNext = { this.createButtonEnabled.value = it }
-                )
+                ).disposedBy(this.disposeBag)
+
 
             val userInputValid = Observable.combineLatest<String, String, String, Boolean>(this.backingEventName, this.backingEventDate, this.backingLocation, Function3 { event, date, location ->
                 Log.e("CreateEventViewModel", "Event name: $event")
@@ -96,11 +108,11 @@ interface CreateEventViewModel {
                 event.isNotEmpty() && date.isNotEmpty() && location.isNotEmpty()
             })
 
-            userInputValidDisposable = userInputValid.subscribeBy(
+            userInputValid.subscribeBy(
                 onNext = { this.createButtonEnabled.value = it }
-            )
+            ).disposedBy(this.disposeBag)
 
-            userInputDisposable = backingCreateButtonTaps
+            backingCreateButtonTaps
                 .withLatestFrom<Unit, String, String, String, String, UserInput>(backingEventName, backingLocation, backingEventDate, backingPassword, object: Function5<Unit, String, String, String, String, UserInput> {
                     override fun invoke(t1: Unit, t2: String, t3: String, t4: String, t5: String): UserInput {
                         return UserInput(
@@ -112,25 +124,21 @@ interface CreateEventViewModel {
                     }
                 }).subscribeBy (
                     onNext = { this.userInput.onNext(it) }
-                )
-            this.saveEventDisposable = this.userInput
+                ).disposedBy(this.disposeBag)
+            this.userInput
                 .switchMap {
                     this.eventRepository.save(it.name, it.date, it.location, it.password)
                 }.subscribeBy(
                     onNext = { this.saveEventResult.onNext(it) }
-                )
-            this.saveEventResultDisposable = this.saveEventResult
+                ).disposedBy(this.disposeBag)
+            this.saveEventResult
                 .subscribeBy(
                     onNext = { this.eventId.value = it.id }
-                )
+                ).disposedBy(this.disposeBag)
         }
 
         override fun onCleared() {
-            userInputValidDisposable.dispose()
-            saveEventResultDisposable.dispose()
-            saveEventDisposable.dispose()
-            createButtonEnabledDisposable.dispose()
-            userInputDisposable.dispose()
+            this.disposeBag.clearBag()
         }
 
         data class UserInput(val name: String, val location: String, val date: String, val password: String)
