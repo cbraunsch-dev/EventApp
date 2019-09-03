@@ -2,6 +2,7 @@ package com.brownicians.eventapp.viewmodels
 
 import android.util.Log
 import androidx.lifecycle.*
+import com.brownicians.eventapp.ObservableBinder
 import com.brownicians.eventapp.repositories.EventRepository
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
@@ -77,31 +78,11 @@ interface CreateEventViewModel {
         private val saveEventResult: PublishSubject<EventModel> = PublishSubject.create()
 
         init {
-            eventNameMediator = MediatorLiveData<String>().apply {
-                addSource(inputs.eventName) { value ->
-                    backingEventName.onNext(value)
-                }
-            }.also { it.observeForever {} }
-            eventDateMediator = MediatorLiveData<String>().apply {
-                addSource(inputs.eventDate) { value ->
-                    backingEventDate.onNext(value)
-                }
-            }.also { it.observeForever {} }
-            locationMediator = MediatorLiveData<String>().apply {
-                addSource(inputs.location) { value ->
-                    backingLocation.onNext(value)
-                }
-            }.also { it.observeForever {} }
-            passwordMediator = MediatorLiveData<String>().apply {
-                addSource(inputs.password) { value ->
-                    backingPassword.onNext(value)
-                }
-            }.also { it.observeForever {} }
-            createButtonTapsMediator = MediatorLiveData<Unit>().apply {
-                addSource(inputs.createButtonTaps) { value ->
-                    backingCreateButtonTaps.onNext(value)
-                }
-            }.also { it.observeForever {} }
+            eventNameMediator = ObservableBinder<String>().bind(inputs.eventName, backingEventName)
+            eventDateMediator = ObservableBinder<String>().bind(inputs.eventDate, backingEventDate)
+            locationMediator = ObservableBinder<String>().bind(inputs.location, backingLocation)
+            passwordMediator = ObservableBinder<String>().bind(inputs.password, backingPassword)
+            createButtonTapsMediator = ObservableBinder<Unit>().bind(inputs.createButtonTaps, backingCreateButtonTaps)
 
             this.createButtonEnabledDisposable = this.backingCreateButtonEnabled
                 .subscribeBy(
