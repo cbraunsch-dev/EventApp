@@ -23,11 +23,13 @@ class CreateEventViewModelTest {
 
     @Mock
     private lateinit var mockEventRepository: EventRepository
+    @Mock
+    private lateinit var mockErrorMapper: ErrorMapper
 
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        testee = CreateEventViewModel.ViewModel(mockEventRepository)
+        testee = CreateEventViewModel.ViewModel(mockEventRepository, mockErrorMapper)
     }
 
     @After
