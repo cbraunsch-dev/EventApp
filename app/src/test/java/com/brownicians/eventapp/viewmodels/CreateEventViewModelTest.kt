@@ -1,6 +1,7 @@
-package com.brownicians.eventapp
+package com.brownicians.eventapp.viewmodels
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.brownicians.eventapp.ErrorMapper
 import io.reactivex.Observable
 import junit.framework.Assert.assertEquals
 import com.brownicians.eventapp.models.EventModel
@@ -13,7 +14,6 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
-import com.brownicians.eventapp.viewmodels.CreateEventViewModel
 
 class CreateEventViewModelTest {
     @get:Rule
@@ -57,26 +57,41 @@ class CreateEventViewModelTest {
         testee.inputs.eventDate.value = "10.01.2019"
         testee.inputs.location.value = "Munich"
         testee.inputs.password.value = "12345"
-        val createdEvent = EventModel(0, "", "", "", "", "", listOf())
-        `when`(this.mockEventRepository.save(any(), any(), any(), any())).thenReturn(Observable.just(createdEvent))
+        val createdEvent = EventModel(0, "", "", "", "", "", listOf(), listOf())
+        `when`(this.mockEventRepository.save(
+            com.brownicians.eventapp.any(),
+            com.brownicians.eventapp.any(),
+            com.brownicians.eventapp.any(),
+            com.brownicians.eventapp.any()
+        )).thenReturn(Observable.just(createdEvent))
 
         //Act
         testee.inputs.createButtonTaps.value = Unit
 
         //Assert
-        Mockito.verify(this.mockEventRepository, times(1)).save(eq(eventName), any(), any(), any())
+        Mockito.verify(this.mockEventRepository, times(1)).save(
+            com.brownicians.eventapp.eq(eventName),
+            com.brownicians.eventapp.any(),
+            com.brownicians.eventapp.any(),
+            com.brownicians.eventapp.any()
+        )
     }
 
     @Test
     fun testCreateButtonTaps_when_savedEvent_then_emitEventId() {
         //Arrange
         val eventId = 1337
-        val createdEvent = EventModel(eventId, "", "", "", "", "", listOf())
+        val createdEvent = EventModel(eventId, "", "", "", "", "", listOf(), listOf())
         testee.inputs.eventName.value = "Birthday"
         testee.inputs.eventDate.value = "10.01.2019"
         testee.inputs.location.value = "Munich"
         testee.inputs.password.value = "12345"
-        `when`(this.mockEventRepository.save(any(), any(), any(), any())).thenReturn(Observable.just(createdEvent))
+        `when`(this.mockEventRepository.save(
+            com.brownicians.eventapp.any(),
+            com.brownicians.eventapp.any(),
+            com.brownicians.eventapp.any(),
+            com.brownicians.eventapp.any()
+        )).thenReturn(Observable.just(createdEvent))
 
         //Act
         testee.inputs.createButtonTaps.value = Unit
