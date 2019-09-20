@@ -2,6 +2,7 @@ package com.brownicians.eventapp.viewmodels
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.brownicians.eventapp.ErrorMapper
+import com.brownicians.eventapp.EventAppResultConverter
 import io.reactivex.Observable
 import junit.framework.Assert.assertEquals
 import com.brownicians.eventapp.models.EventModel
@@ -29,7 +30,7 @@ class CreateEventViewModelTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        testee = CreateEventViewModel.ViewModel(mockEventRepository, mockErrorMapper)
+        testee = CreateEventViewModel.ViewModel(mockEventRepository, EventAppResultConverter(mockErrorMapper))
     }
 
     @After

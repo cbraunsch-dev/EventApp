@@ -9,9 +9,9 @@ import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.subjects.PublishSubject
 
 interface EventViewModel {
-    class Factory(private val eventRepository: EventRepository, private val errorMapper: ErrorMapper): ViewModelProvider.Factory {
+    class Factory(private val eventRepository: EventRepository, private val resultConverter: ResultConverter): ViewModelProvider.Factory {
         override fun <T : androidx.lifecycle.ViewModel?> create(modelClass: Class<T>): T {
-            return ViewModel(eventRepository, errorMapper) as T
+            return ViewModel(eventRepository, resultConverter) as T
         }
     }
 
@@ -21,14 +21,14 @@ interface EventViewModel {
         val onCreate: MutableLiveData<Unit>
     }
 
-    interface Outputs {
+    interface Outputs: ErrorEmissionCapable {
         val items: LiveData<List<EventItemModel>>
     }
 
-    class ViewModel(private val eventRepository: EventRepository, private val errorMapper: ErrorMapper): androidx.lifecycle.ViewModel(), Inputs, Outputs {
+    class ViewModel(private val eventRepository: EventRepository, private val resultConverter: ResultConverter): androidx.lifecycle.ViewModel(), Inputs, Outputs {
         val inputs: Inputs = this
         val outputs: Outputs = this
-        private val disposeBag = DisposeBag()
+        override val disposeBag = DisposeBag()
 
         private val eventIdMediator: MediatorLiveData<Int>
         private val backingEventId: PublishSubject<Int> = PublishSubject.create()
@@ -42,6 +42,8 @@ interface EventViewModel {
         private val backingItems: PublishSubject<List<EventItemModel>> = PublishSubject.create()
         override val items = MutableLiveData<List<EventItemModel>>()
 
+        override val error = MutableLiveData<OperationError>()
+
         private val eventResult: PublishSubject<OperationResult<EventModel?>> = PublishSubject.create()
 
         init {
@@ -51,18 +53,22 @@ interface EventViewModel {
 
             this.backingEventId
                 .switchMap {
-                    this.eventRepository.load(it)
-                }.compose { WrapInErrorHandledResult<EventModel?>(this.errorMapper).apply(it) }
-                .subscribeBy (
+                    val operation = this.eventRepository.load(it)
+                    this.resultConverter.convert(operation)
+                }
+                .subscribeBy(
                     onNext = { this.eventResult.onNext(it) }
-                ).disposedBy(this.disposeBag)
+                )
+                .disposedBy(this.disposeBag)
             this.eventResult
+                .filter { it.result != null }
                 .map { it.result }
                 .map {
                     this.createItems(it)
                 }.subscribeBy(
                     onNext = { this.items.value = it }
                 ).disposedBy(this.disposeBag)
+            this.bindError(this.eventResult)
         }
 
         private fun createItems(eventModel: EventModel): List<EventItemModel> {

@@ -16,9 +16,9 @@ import io.reactivex.rxkotlin.withLatestFrom
 import io.reactivex.subjects.PublishSubject
 
 interface CreateEventViewModel {
-    class Factory(private val eventRepository: EventRepository, private val errorMapper: ErrorMapper): ViewModelProvider.Factory {
+    class Factory(private val eventRepository: EventRepository, private val resultConverter: ResultConverter): ViewModelProvider.Factory {
         override fun <T : androidx.lifecycle.ViewModel?> create(modelClass: Class<T>): T {
-            return ViewModel(eventRepository, errorMapper) as T
+            return ViewModel(eventRepository, resultConverter) as T
         }
     }
 
@@ -40,7 +40,7 @@ interface CreateEventViewModel {
         val eventId: LiveData<Int>
     }
 
-    class ViewModel(private val eventRepository: EventRepository, private val errorMapper: ErrorMapper): androidx.lifecycle.ViewModel(),
+    class ViewModel(private val eventRepository: EventRepository, private val resultConverter: ResultConverter): androidx.lifecycle.ViewModel(),
         Outputs,
         Inputs {
         val inputs: Inputs = this
@@ -104,8 +104,9 @@ interface CreateEventViewModel {
                 ).disposedBy(this.disposeBag)
             this.userInput
                 .switchMap {
-                    this.eventRepository.save(it.name, it.date, it.location, it.password)
-                }.compose { WrapInErrorHandledResult<EventModel>(this.errorMapper).apply(it) }
+                    val operation = this.eventRepository.save(it.name, it.date, it.location, it.password)
+                    resultConverter.convert(operation)
+                }
                 .subscribeBy(
                     onNext = { this.saveEventResult.onNext(it) }
                 ).disposedBy(this.disposeBag)

@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.*
+import com.brownicians.eventapp.EventAppResultConverter
 import com.brownicians.eventapp.LocalizedStringErrorMapper
 import com.brownicians.eventapp.R
 import com.brownicians.eventapp.databinding.ActivityCreateEventBinding
@@ -16,7 +17,7 @@ class CreateEventActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val binding: ActivityCreateEventBinding = DataBindingUtil.setContentView(this, R.layout.activity_create_event)
-        this.viewModel = ViewModelProviders.of(this, CreateEventViewModel.Factory(InMemoryEventRepository(), LocalizedStringErrorMapper()))[CreateEventViewModel.ViewModel::class.java]
+        this.viewModel = ViewModelProviders.of(this, CreateEventViewModel.Factory(InMemoryEventRepository(), EventAppResultConverter(LocalizedStringErrorMapper())))[CreateEventViewModel.ViewModel::class.java]
         binding.viewmodel = this.viewModel
         binding.lifecycleOwner = this
     }
